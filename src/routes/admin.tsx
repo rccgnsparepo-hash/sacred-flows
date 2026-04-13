@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link, Outlet } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { BottomNav } from '@/components/BottomNav';
