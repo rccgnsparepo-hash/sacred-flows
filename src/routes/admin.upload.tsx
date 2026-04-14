@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { NeuInput } from '@/components/NeuInput';
 import { NeuButton } from '@/components/NeuButton';
-import { ArrowLeft, Upload, FileText, Youtube } from 'lucide-react';
+import { ArrowLeft, Upload, FileText, Youtube, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/admin/upload')({
@@ -44,7 +44,7 @@ function UploadPage() {
         const path = `${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from('church-files')
-          .upload(path, file);
+          .upload(path, file, { contentType: file.type });
         if (uploadError) throw uploadError;
 
         const { data: urlData } = supabase.storage.from('church-files').getPublicUrl(path);
@@ -61,8 +61,13 @@ function UploadPage() {
       });
 
       if (error) throw error;
-      toast.success('Content uploaded!');
-      navigate({ to: '/admin' });
+      toast.success('Content uploaded successfully!');
+      // Reset form
+      setTitle('');
+      setDescription('');
+      setYoutubeLink('');
+      setFile(null);
+      if (fileRef.current) fileRef.current.value = '';
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Upload failed');
     } finally {
@@ -122,8 +127,18 @@ function UploadPage() {
               <label className="text-[13px] font-medium text-foreground pl-1">PDF File</label>
               <input ref={fileRef} type="file" accept=".pdf" className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
               <button type="button" onClick={() => fileRef.current?.click()} className="w-full neu-card p-6 flex flex-col items-center gap-2">
-                <Upload size={24} className="text-muted-foreground" />
-                <span className="text-[14px] text-muted-foreground">{file ? file.name : 'Tap to select PDF'}</span>
+                {file ? (
+                  <>
+                    <CheckCircle size={24} className="text-primary" />
+                    <span className="text-[14px] text-primary font-medium">{file.name}</span>
+                    <span className="text-[12px] text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload size={24} className="text-muted-foreground" />
+                    <span className="text-[14px] text-muted-foreground">Tap to select PDF</span>
+                  </>
+                )}
               </button>
             </div>
           )}
