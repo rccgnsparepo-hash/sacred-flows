@@ -10,19 +10,27 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PrayersRouteImport } from './routes/prayers'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as HomeRouteImport } from './routes/home'
+import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContentIdRouteImport } from './routes/content.$id'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminUploadRouteImport } from './routes/admin.upload'
+import { Route as AdminGalleryRouteImport } from './routes/admin.gallery'
 import { Route as AdminContentRouteImport } from './routes/admin.content'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrayersRoute = PrayersRouteImport.update({
+  id: '/prayers',
+  path: '/prayers',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LibraryRoute = LibraryRouteImport.update({
@@ -33,6 +41,11 @@ const LibraryRoute = LibraryRouteImport.update({
 const HomeRoute = HomeRouteImport.update({
   id: '/home',
   path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GalleryRoute = GalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -65,6 +78,11 @@ const AdminUploadRoute = AdminUploadRouteImport.update({
   path: '/upload',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminGalleryRoute = AdminGalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminContentRoute = AdminContentRouteImport.update({
   id: '/content',
   path: '/content',
@@ -75,10 +93,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/gallery': typeof GalleryRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
+  '/prayers': typeof PrayersRoute
   '/profile': typeof ProfileRoute
   '/admin/content': typeof AdminContentRoute
+  '/admin/gallery': typeof AdminGalleryRoute
   '/admin/upload': typeof AdminUploadRoute
   '/admin/users': typeof AdminUsersRoute
   '/content/$id': typeof ContentIdRoute
@@ -87,10 +108,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/gallery': typeof GalleryRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
+  '/prayers': typeof PrayersRoute
   '/profile': typeof ProfileRoute
   '/admin/content': typeof AdminContentRoute
+  '/admin/gallery': typeof AdminGalleryRoute
   '/admin/upload': typeof AdminUploadRoute
   '/admin/users': typeof AdminUsersRoute
   '/content/$id': typeof ContentIdRoute
@@ -100,10 +124,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/gallery': typeof GalleryRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
+  '/prayers': typeof PrayersRoute
   '/profile': typeof ProfileRoute
   '/admin/content': typeof AdminContentRoute
+  '/admin/gallery': typeof AdminGalleryRoute
   '/admin/upload': typeof AdminUploadRoute
   '/admin/users': typeof AdminUsersRoute
   '/content/$id': typeof ContentIdRoute
@@ -114,10 +141,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/gallery'
     | '/home'
     | '/library'
+    | '/prayers'
     | '/profile'
     | '/admin/content'
+    | '/admin/gallery'
     | '/admin/upload'
     | '/admin/users'
     | '/content/$id'
@@ -126,10 +156,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/gallery'
     | '/home'
     | '/library'
+    | '/prayers'
     | '/profile'
     | '/admin/content'
+    | '/admin/gallery'
     | '/admin/upload'
     | '/admin/users'
     | '/content/$id'
@@ -138,10 +171,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/gallery'
     | '/home'
     | '/library'
+    | '/prayers'
     | '/profile'
     | '/admin/content'
+    | '/admin/gallery'
     | '/admin/upload'
     | '/admin/users'
     | '/content/$id'
@@ -151,8 +187,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
+  GalleryRoute: typeof GalleryRoute
   HomeRoute: typeof HomeRoute
   LibraryRoute: typeof LibraryRoute
+  PrayersRoute: typeof PrayersRoute
   ProfileRoute: typeof ProfileRoute
   ContentIdRoute: typeof ContentIdRoute
 }
@@ -164,6 +202,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prayers': {
+      id: '/prayers'
+      path: '/prayers'
+      fullPath: '/prayers'
+      preLoaderRoute: typeof PrayersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/library': {
@@ -178,6 +223,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gallery': {
+      id: '/gallery'
+      path: '/gallery'
+      fullPath: '/gallery'
+      preLoaderRoute: typeof GalleryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -222,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUploadRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/gallery': {
+      id: '/admin/gallery'
+      path: '/gallery'
+      fullPath: '/admin/gallery'
+      preLoaderRoute: typeof AdminGalleryRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/content': {
       id: '/admin/content'
       path: '/content'
@@ -234,12 +293,14 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminContentRoute: typeof AdminContentRoute
+  AdminGalleryRoute: typeof AdminGalleryRoute
   AdminUploadRoute: typeof AdminUploadRoute
   AdminUsersRoute: typeof AdminUsersRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminContentRoute: AdminContentRoute,
+  AdminGalleryRoute: AdminGalleryRoute,
   AdminUploadRoute: AdminUploadRoute,
   AdminUsersRoute: AdminUsersRoute,
 }
@@ -250,8 +311,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
+  GalleryRoute: GalleryRoute,
   HomeRoute: HomeRoute,
   LibraryRoute: LibraryRoute,
+  PrayersRoute: PrayersRoute,
   ProfileRoute: ProfileRoute,
   ContentIdRoute: ContentIdRoute,
 }

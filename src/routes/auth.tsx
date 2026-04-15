@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { NeuInput } from '@/components/NeuInput';
 import { NeuButton } from '@/components/NeuButton';
-import { Church, Shield, User } from 'lucide-react';
+import { Church, Shield, User, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -23,15 +23,28 @@ function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [dob, setDob] = useState('');
   const [adminKey, setAdminKey] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
+  const fileRef = useRef<HTMLInputElement>(null);
 
   if (user) {
     navigate({ to: '/home' });
     return null;
   }
+
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error('Please select an image'); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error('Image must be under 2MB'); return; }
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,9 +61,7 @@ function AuthPage() {
         await signUp(email.trim(), password, name.trim());
 
         if (signUpRole === 'admin') {
-          // Wait briefly for the auth trigger to create the user, then verify admin key
           toast.info('Verifying admin key...');
-          // We need to sign in first to get the user id
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: email.trim(),
             password,
@@ -63,6 +74,15 @@ function AuthPage() {
           }
 
           if (signInData.user) {
+            // Upload avatar if provided
+            if (avatarFile) {
+              await uploadAvatar(signInData.user.id);
+            }
+            // Update DOB if provided
+            if (dob) {
+              await supabase.from('profiles').update({ date_of_birth: dob }).eq('user_id', signInData.user.id);
+            }
+
             const { data, error } = await supabase.functions.invoke('verify-admin-key', {
               body: { admin_key: adminKey.trim(), user_id: signInData.user.id },
             });
@@ -78,7 +98,20 @@ function AuthPage() {
             }
           }
         } else {
-          toast.success('Account created! Check your email to confirm.');
+          // For regular users, try to sign in to upload avatar/DOB
+          const { data: signInData } = await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password,
+          });
+
+          if (signInData?.user) {
+            if (avatarFile) await uploadAvatar(signInData.user.id);
+            if (dob) await supabase.from('profiles').update({ date_of_birth: dob }).eq('user_id', signInData.user.id);
+            toast.success('Account created! Welcome!');
+            navigate({ to: '/home' });
+          } else {
+            toast.success('Account created! Check your email to confirm.');
+          }
         }
       } else {
         await signIn(email.trim(), password);
@@ -91,6 +124,16 @@ function AuthPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const uploadAvatar = async (userId: string) => {
+    if (!avatarFile) return;
+    const ext = avatarFile.name.split('.').pop();
+    const path = `${userId}/avatar.${ext}`;
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, avatarFile, { upsert: true });
+    if (uploadError) return;
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
+    await supabase.from('profiles').update({ avatar_url: `${publicUrl}?t=${Date.now()}` }).eq('user_id', userId);
   };
 
   return (
@@ -131,14 +174,46 @@ function AuthPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
-            <NeuInput
-              label="Full Name"
-              placeholder="John Doe"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              autoComplete="name"
-            />
+            <>
+              {/* Avatar upload */}
+              <div className="flex justify-center mb-2">
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    className="w-20 h-20 rounded-full neu-convex flex items-center justify-center overflow-hidden"
+                  >
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <Camera size={24} className="text-muted-foreground" />
+                    )}
+                  </button>
+                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarSelect} />
+                  <span className="text-[11px] text-muted-foreground block text-center mt-1">Profile Photo</span>
+                </div>
+              </div>
+
+              <NeuInput
+                label="Full Name"
+                placeholder="John Doe"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                autoComplete="name"
+              />
+
+              <div className="space-y-1.5">
+                <label className="text-[13px] font-medium text-foreground pl-1">Date of Birth</label>
+                <input
+                  type="date"
+                  value={dob}
+                  onChange={e => setDob(e.target.value)}
+                  className="w-full px-4 py-3.5 neu-input text-foreground text-[15px] focus:outline-none"
+                />
+              </div>
+            </>
           )}
+
           <NeuInput
             label="Email"
             type="email"
@@ -175,7 +250,7 @@ function AuthPage() {
 
         <div className="mt-6 text-center">
           <button
-            onClick={() => { setIsSignUp(!isSignUp); setSignUpRole('user'); setAdminKey(''); }}
+            onClick={() => { setIsSignUp(!isSignUp); setSignUpRole('user'); setAdminKey(''); setAvatarFile(null); setAvatarPreview(null); setDob(''); }}
             className="text-[14px] text-muted-foreground"
           >
             {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
