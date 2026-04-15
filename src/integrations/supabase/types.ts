@@ -220,6 +220,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_pray_count: { Args: { request_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"
