@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { ContentCard } from '@/components/ContentCard';
 import { SkeletonCard } from '@/components/SkeletonCard';
 import { BottomNav } from '@/components/BottomNav';
-import { Search, RefreshCw } from 'lucide-react';
+import { Search, RefreshCw, Cake, Play } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/home')({
@@ -23,7 +23,21 @@ interface ContentItem {
   title: string;
   description: string | null;
   type: string;
+  youtube_link: string | null;
+  file_url: string | null;
   created_at: string;
+}
+
+interface BirthdayUser {
+  name: string;
+  avatar_url: string | null;
+  date_of_birth: string;
+  daysUntil: number;
+}
+
+function getYoutubeId(url: string): string | null {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
+  return match ? match[1] : null;
 }
 
 function HomePage() {
@@ -34,6 +48,7 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [birthdays, setBirthdays] = useState<BirthdayUser[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: '/auth' });
@@ -41,16 +56,46 @@ function HomePage() {
 
   const fetchData = useCallback(async () => {
     if (!user) return;
-    const [contentRes, bookmarkRes] = await Promise.all([
-      supabase.from('content').select('id, title, description, type, created_at').order('created_at', { ascending: false }),
+    const [contentRes, bookmarkRes, profilesRes] = await Promise.all([
+      supabase.from('content').select('id, title, description, type, youtube_link, file_url, created_at').order('created_at', { ascending: false }),
       supabase.from('bookmarks').select('content_id').eq('user_id', user.id),
+      supabase.from('profiles').select('name, avatar_url, date_of_birth'),
     ]);
     if (contentRes.data) setContent(contentRes.data);
     if (bookmarkRes.data) setBookmarkedIds(new Set(bookmarkRes.data.map(b => b.content_id)));
+
+    // Calculate upcoming birthdays
+    if (profilesRes.data) {
+      const today = new Date();
+      const upcoming: BirthdayUser[] = profilesRes.data
+        .filter(p => p.date_of_birth)
+        .map(p => {
+          const dob = new Date(p.date_of_birth!);
+          const thisYear = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
+          if (thisYear < today) thisYear.setFullYear(today.getFullYear() + 1);
+          const daysUntil = Math.ceil((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          return { name: p.name, avatar_url: p.avatar_url, date_of_birth: p.date_of_birth!, daysUntil };
+        })
+        .sort((a, b) => a.daysUntil - b.daysUntil)
+        .slice(0, 5);
+      setBirthdays(upcoming);
+    }
+
     setLoading(false);
   }, [user]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Realtime content updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('content-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'content' }, () => {
+        fetchData();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchData]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -103,6 +148,34 @@ function HomePage() {
         </div>
       </div>
 
+      {/* Birthday section */}
+      {birthdays.length > 0 && !search && (
+        <div className="px-5 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Cake size={16} className="text-church-gold" />
+            <h2 className="text-[15px] font-bold text-foreground">Upcoming Birthdays</h2>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {birthdays.map((b, i) => (
+              <div key={i} className="shrink-0 neu-card-sm p-3 flex flex-col items-center w-20">
+                <div className="w-10 h-10 rounded-full neu-convex flex items-center justify-center overflow-hidden mb-1">
+                  {b.avatar_url ? (
+                    <img src={b.avatar_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[11px] font-bold text-primary">{b.name.charAt(0).toUpperCase()}</span>
+                  )}
+                </div>
+                <p className="text-[11px] font-medium text-foreground text-center line-clamp-1">{b.name.split(' ')[0]}</p>
+                <p className="text-[10px] text-church-gold font-semibold">
+                  {b.daysUntil === 0 ? '🎂 Today!' : b.daysUntil === 1 ? 'Tomorrow' : `${b.daysUntil}d`}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Content feed */}
       <div className="px-5 space-y-4">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
@@ -114,15 +187,36 @@ function HomePage() {
           </div>
         ) : (
           filtered.map(item => (
-            <ContentCard
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              description={item.description}
-              type={item.type as 'PDF' | 'YOUTUBE'}
-              isBookmarked={bookmarkedIds.has(item.id)}
-              onToggleBookmark={() => toggleBookmark(item.id)}
-            />
+            <div key={item.id} className="slide-up">
+              {/* YouTube thumbnail preview */}
+              {item.type === 'YOUTUBE' && item.youtube_link && getYoutubeId(item.youtube_link) && (
+                <div className="neu-card overflow-hidden mb-0 rounded-b-none">
+                  <div className="relative aspect-video">
+                    <img
+                      src={`https://img.youtube.com/vi/${getYoutubeId(item.youtube_link)}/hqdefault.jpg`}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-foreground/20">
+                      <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center">
+                        <Play size={24} className="text-primary-foreground ml-1" fill="currentColor" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className={item.type === 'YOUTUBE' && item.youtube_link && getYoutubeId(item.youtube_link) ? 'neu-card rounded-t-none border-t-0' : ''}>
+                <ContentCard
+                  id={item.id}
+                  title={item.title}
+                  description={item.description}
+                  type={item.type as 'PDF' | 'YOUTUBE'}
+                  isBookmarked={bookmarkedIds.has(item.id)}
+                  onToggleBookmark={() => toggleBookmark(item.id)}
+                />
+              </div>
+            </div>
           ))
         )}
       </div>
