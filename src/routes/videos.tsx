@@ -62,9 +62,10 @@ function VideosPage() {
         .from('profiles').select('user_id, name, avatar_url').in('user_id', userIds);
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
 
-      setVideos(data.map(v => ({
+      setVideos(data.filter(v => v.media_url && v.media_type).map(v => ({
         ...v,
         media_url: v.media_url!,
+        media_type: v.media_type!,
         user_name: profileMap.get(v.user_id)?.name || 'User',
         user_avatar: profileMap.get(v.user_id)?.avatar_url || undefined,
       })));

@@ -9,11 +9,13 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VideosRouteImport } from './routes/videos'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrayersRouteImport } from './routes/prayers'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as GalleryRouteImport } from './routes/gallery'
+import { Route as CreateRouteImport } from './routes/create'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -23,6 +25,11 @@ import { Route as AdminUploadRouteImport } from './routes/admin.upload'
 import { Route as AdminGalleryRouteImport } from './routes/admin.gallery'
 import { Route as AdminContentRouteImport } from './routes/admin.content'
 
+const VideosRoute = VideosRouteImport.update({
+  id: '/videos',
+  path: '/videos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -46,6 +53,11 @@ const HomeRoute = HomeRouteImport.update({
 const GalleryRoute = GalleryRouteImport.update({
   id: '/gallery',
   path: '/gallery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreateRoute = CreateRouteImport.update({
+  id: '/create',
+  path: '/create',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -93,11 +105,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/create': typeof CreateRoute
   '/gallery': typeof GalleryRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
   '/prayers': typeof PrayersRoute
   '/profile': typeof ProfileRoute
+  '/videos': typeof VideosRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/upload': typeof AdminUploadRoute
@@ -108,11 +122,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/create': typeof CreateRoute
   '/gallery': typeof GalleryRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
   '/prayers': typeof PrayersRoute
   '/profile': typeof ProfileRoute
+  '/videos': typeof VideosRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/upload': typeof AdminUploadRoute
@@ -124,11 +140,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/create': typeof CreateRoute
   '/gallery': typeof GalleryRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
   '/prayers': typeof PrayersRoute
   '/profile': typeof ProfileRoute
+  '/videos': typeof VideosRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/upload': typeof AdminUploadRoute
@@ -141,11 +159,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/create'
     | '/gallery'
     | '/home'
     | '/library'
     | '/prayers'
     | '/profile'
+    | '/videos'
     | '/admin/content'
     | '/admin/gallery'
     | '/admin/upload'
@@ -156,11 +176,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/create'
     | '/gallery'
     | '/home'
     | '/library'
     | '/prayers'
     | '/profile'
+    | '/videos'
     | '/admin/content'
     | '/admin/gallery'
     | '/admin/upload'
@@ -171,11 +193,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/create'
     | '/gallery'
     | '/home'
     | '/library'
     | '/prayers'
     | '/profile'
+    | '/videos'
     | '/admin/content'
     | '/admin/gallery'
     | '/admin/upload'
@@ -187,16 +211,25 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CreateRoute: typeof CreateRoute
   GalleryRoute: typeof GalleryRoute
   HomeRoute: typeof HomeRoute
   LibraryRoute: typeof LibraryRoute
   PrayersRoute: typeof PrayersRoute
   ProfileRoute: typeof ProfileRoute
+  VideosRoute: typeof VideosRoute
   ContentIdRoute: typeof ContentIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/videos': {
+      id: '/videos'
+      path: '/videos'
+      fullPath: '/videos'
+      preLoaderRoute: typeof VideosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -230,6 +263,13 @@ declare module '@tanstack/react-router' {
       path: '/gallery'
       fullPath: '/gallery'
       preLoaderRoute: typeof GalleryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/create': {
+      id: '/create'
+      path: '/create'
+      fullPath: '/create'
+      preLoaderRoute: typeof CreateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -311,11 +351,13 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
+  CreateRoute: CreateRoute,
   GalleryRoute: GalleryRoute,
   HomeRoute: HomeRoute,
   LibraryRoute: LibraryRoute,
   PrayersRoute: PrayersRoute,
   ProfileRoute: ProfileRoute,
+  VideosRoute: VideosRoute,
   ContentIdRoute: ContentIdRoute,
 }
 export const routeTree = rootRouteImport
