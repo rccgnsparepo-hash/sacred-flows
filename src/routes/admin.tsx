@@ -2,13 +2,13 @@ import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { BottomNav } from '@/components/BottomNav';
-import { Upload, Users, FileText, Image, ArrowRight } from 'lucide-react';
+import { Upload, Users, FileText, Image, ArrowRight, HandHeart } from 'lucide-react';
 
 export const Route = createFileRoute('/admin')({
   head: () => ({
     meta: [
-      { title: 'Admin — Church Hub' },
-      { name: 'description', content: 'Admin dashboard for managing church content' },
+      { title: 'Admin — NSP App' },
+      { name: 'description', content: 'Admin dashboard for managing content' },
     ],
   }),
   component: AdminPage,
@@ -26,9 +26,9 @@ function AdminPage() {
 
   const cards = [
     { to: '/admin/upload' as const, icon: Upload, color: 'text-primary', title: 'Upload Content', desc: 'Add PDFs or YouTube links' },
-    { to: '/admin/content' as const, icon: FileText, color: 'text-church-gold', title: 'Manage Content', desc: 'Edit or delete existing content' },
-    { to: '/admin/gallery' as const, icon: Image, color: 'text-church-gold', title: 'Gallery Management', desc: 'Upload and manage gallery photos' },
-    { to: '/admin/users' as const, icon: Users, color: 'text-primary', title: 'View Users', desc: 'Manage users & send messages' },
+    { to: '/admin/content' as const, icon: FileText, color: 'text-church-gold', title: 'Manage Content', desc: 'Edit or delete content' },
+    { to: '/admin/gallery' as const, icon: Image, color: 'text-church-gold', title: 'Gallery', desc: 'Upload & manage photos' },
+    { to: '/admin/users' as const, icon: Users, color: 'text-primary', title: 'Users', desc: 'Manage users & send messages' },
   ];
 
   return (

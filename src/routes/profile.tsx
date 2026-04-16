@@ -1,18 +1,19 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme, type Theme } from '@/hooks/useTheme';
 import { supabase } from '@/integrations/supabase/client';
 import { NeuButton } from '@/components/NeuButton';
 import { BottomNav } from '@/components/BottomNav';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { User, Mail, Shield, LogOut, Camera, Bell, AlertTriangle, MessageCircle, X, Calendar } from 'lucide-react';
+import { User, Mail, Shield, LogOut, Camera, Bell, AlertTriangle, MessageCircle, X, Calendar, Palette, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/profile')({
   head: () => ({
     meta: [
-      { title: 'Profile — Church Hub' },
-      { name: 'description', content: 'Your Church Hub profile' },
+      { title: 'Profile — NSP App' },
+      { name: 'description', content: 'Your NSP App profile' },
     ],
   }),
   component: ProfilePage,
@@ -26,29 +27,40 @@ interface Message {
   created_at: string;
 }
 
+const THEMES: { value: Theme; label: string; desc: string }[] = [
+  { value: 'light', label: '☀️ Light', desc: 'Clean & bright' },
+  { value: 'dark', label: '🌙 Dark', desc: 'Easy on the eyes' },
+  { value: 'cyberpunk', label: '⚡ Cyberpunk', desc: 'Neon glow' },
+  { value: 'minimal', label: '🤍 Minimal', desc: 'Black & white' },
+];
+
 function ProfilePage() {
   const { user, profile, role, isLoading, signOut, isAdmin, refreshProfile } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showMessages, setShowMessages] = useState(false);
+  const [showThemes, setShowThemes] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDob, setEditDob] = useState('');
+  const [editBio, setEditBio] = useState('');
   const [saving, setSaving] = useState(false);
   const [dob, setDob] = useState<string | null>(null);
+  const [bio, setBio] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoading && !user) navigate({ to: '/auth' });
   }, [user, isLoading, navigate]);
 
-  // Fetch DOB from profiles
   useEffect(() => {
     if (!user) return;
-    supabase.from('profiles').select('date_of_birth').eq('user_id', user.id).single().then(({ data }) => {
+    supabase.from('profiles').select('date_of_birth, bio').eq('user_id', user.id).single().then(({ data }) => {
       if (data?.date_of_birth) setDob(data.date_of_birth);
+      if (data?.bio) setBio(data.bio);
     });
   }, [user]);
 
@@ -86,8 +98,7 @@ function ProfilePage() {
       const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
-      const { error: updateError } = await supabase.from('profiles').update({ avatar_url: `${publicUrl}?t=${Date.now()}` }).eq('user_id', user.id);
-      if (updateError) throw updateError;
+      await supabase.from('profiles').update({ avatar_url: `${publicUrl}?t=${Date.now()}` }).eq('user_id', user.id);
       await refreshProfile();
       toast.success('Avatar updated!');
     } catch (err) {
@@ -106,20 +117,24 @@ function ProfilePage() {
   const startEdit = () => {
     setEditName(profile?.name || '');
     setEditDob(dob || '');
+    setEditBio(bio || '');
     setEditing(true);
   };
 
   const handleSaveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from('profiles').update({
-      name: editName.trim() || undefined,
-      date_of_birth: editDob || undefined,
-    }).eq('user_id', user.id);
+    const updates: Record<string, unknown> = {};
+    if (editName.trim()) updates.name = editName.trim();
+    if (editDob) updates.date_of_birth = editDob;
+    updates.bio = editBio.trim() || null;
+
+    const { error } = await supabase.from('profiles').update(updates).eq('user_id', user.id);
     if (error) {
       toast.error('Failed to update profile');
     } else {
       if (editDob) setDob(editDob);
+      setBio(editBio.trim() || null);
       await refreshProfile();
       toast.success('Profile updated!');
     }
@@ -138,15 +153,41 @@ function ProfilePage() {
       <div className="px-5 pt-14">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-[22px] font-bold text-foreground">Profile</h1>
-          <button onClick={() => setShowMessages(!showMessages)} className="neu-btn p-3 relative">
-            <Bell size={18} className="text-foreground" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
-                {unreadCount}
-              </span>
-            )}
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowThemes(!showThemes)} className="neu-btn p-3">
+              <Palette size={18} className="text-primary" />
+            </button>
+            <button onClick={() => setShowMessages(!showMessages)} className="neu-btn p-3 relative">
+              <Bell size={18} className="text-foreground" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
+
+        {/* Theme picker */}
+        {showThemes && (
+          <div className="mb-6 fade-in">
+            <h2 className="text-[15px] font-bold text-foreground mb-3">Choose Theme</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {THEMES.map(t => (
+                <button
+                  key={t.value}
+                  onClick={() => { setTheme(t.value); toast.success(`${t.label} theme applied`); }}
+                  className={`p-4 rounded-2xl text-left transition-all ${
+                    theme === t.value ? 'neu-pressed border-2 border-primary' : 'neu-card'
+                  }`}
+                >
+                  <p className="text-[14px] font-semibold text-foreground">{t.label}</p>
+                  <p className="text-[12px] text-muted-foreground">{t.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {showMessages ? (
           <div className="mb-6 fade-in">
@@ -204,17 +245,36 @@ function ProfilePage() {
                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
               </div>
               <h2 className="text-[18px] font-bold text-foreground mt-4">{profile?.name || 'User'}</h2>
+              {bio && <p className="text-[13px] text-muted-foreground mt-1 text-center max-w-[250px]">{bio}</p>}
               {uploading && <p className="text-[12px] text-muted-foreground mt-1">Uploading...</p>}
               {isAdmin && (
-                <span className="mt-1 text-[11px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-church-gold/15 text-church-gold">Admin</span>
+                <span className="mt-2 text-[11px] font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-church-gold/15 text-church-gold">Admin</span>
               )}
             </div>
+
+            {/* Admin link */}
+            {isAdmin && (
+              <button
+                onClick={() => navigate({ to: '/admin' })}
+                className="w-full neu-card p-4 flex items-center gap-3 mb-4"
+              >
+                <div className="neu-btn p-2.5"><Shield size={16} className="text-church-gold" /></div>
+                <div className="flex-1">
+                  <p className="text-[14px] font-semibold text-foreground">Admin Dashboard</p>
+                  <p className="text-[12px] text-muted-foreground">Manage content & users</p>
+                </div>
+              </button>
+            )}
 
             {editing ? (
               <div className="space-y-4 mb-6 fade-in">
                 <div className="space-y-1.5">
                   <label className="text-[13px] font-medium text-foreground pl-1">Full Name</label>
                   <input value={editName} onChange={e => setEditName(e.target.value)} className="w-full px-4 py-3.5 neu-input text-foreground text-[15px] focus:outline-none" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[13px] font-medium text-foreground pl-1">Bio</label>
+                  <textarea value={editBio} onChange={e => setEditBio(e.target.value)} placeholder="Tell us about yourself..." rows={2} maxLength={200} className="w-full px-4 py-3 neu-input text-foreground text-[14px] placeholder:text-muted-foreground focus:outline-none resize-none" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[13px] font-medium text-foreground pl-1">Date of Birth</label>
@@ -236,15 +296,6 @@ function ProfilePage() {
                     <p className="text-[14px] text-foreground font-medium">{profile?.email || user?.email}</p>
                   </div>
                 </div>
-
-                <div className="neu-card p-4 flex items-center gap-3">
-                  <div className="neu-btn p-2.5"><Shield size={16} className="text-primary" /></div>
-                  <div>
-                    <p className="text-[12px] text-muted-foreground">Role</p>
-                    <p className="text-[14px] text-foreground font-medium capitalize">{role || 'user'}</p>
-                  </div>
-                </div>
-
                 {dob && (
                   <div className="neu-card p-4 flex items-center gap-3">
                     <div className="neu-btn p-2.5"><Calendar size={16} className="text-church-gold" /></div>
@@ -254,7 +305,6 @@ function ProfilePage() {
                     </div>
                   </div>
                 )}
-
                 <button onClick={startEdit} className="w-full neu-btn py-3 text-[14px] font-semibold text-primary">
                   Edit Profile
                 </button>

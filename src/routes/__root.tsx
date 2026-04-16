@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/hooks/useTheme";
 import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 
@@ -30,15 +31,15 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "Nsp Hub" },
-      { name: "description", content: "Your spiritual content platform — sermons, resources, and more" },
-      { property: "og:title", content: "Nsp Hub" },
-      { property: "og:description", content: "Your spiritual content platform — sermons, resources, and more" },
+      { title: "NSP App" },
+      { name: "description", content: "Your community platform — connect, share, and grow together" },
+      { property: "og:title", content: "NSP App" },
+      { property: "og:description", content: "Your community platform — connect, share, and grow together" },
       { property: "og:type", content: "website" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
-      { name: "twitter:title", content: "Nsp Hub" },
-      { name: "twitter:description", content: "Your spiritual content platform — sermons, resources, and more" },
+      { name: "twitter:title", content: "NSP App" },
+      { name: "twitter:description", content: "Your community platform — connect, share, and grow together" },
       { name: "twitter:card", content: "summary" },
     ],
     links: [
@@ -67,10 +68,12 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <AuthProvider>
-      <div className="max-w-md mx-auto min-h-screen relative">
-        <Outlet />
-      </div>
-      <Toaster position="top-center" richColors />
+      <ThemeProvider>
+        <div className="max-w-md mx-auto min-h-screen relative">
+          <Outlet />
+        </div>
+        <Toaster position="top-center" richColors />
+      </ThemeProvider>
     </AuthProvider>
   );
 }

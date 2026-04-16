@@ -3,15 +3,15 @@ import { useState, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { NeuInput } from '@/components/NeuInput';
 import { NeuButton } from '@/components/NeuButton';
-import { Church, Shield, User, Camera } from 'lucide-react';
+import { Sparkles, Shield, User, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 export const Route = createFileRoute('/auth')({
   head: () => ({
     meta: [
-      { title: 'Sign In — Church Hub' },
-      { name: 'description', content: 'Sign in or create your Church Hub account' },
+      { title: 'Sign In — NSP App' },
+      { name: 'description', content: 'Sign in or create your NSP App account' },
     ],
   }),
   component: AuthPage,
@@ -60,59 +60,38 @@ function AuthPage() {
       if (isSignUp) {
         await signUp(email.trim(), password, name.trim());
 
+        // Auto-confirm is enabled, so sign in immediately
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+
+        if (signInError || !signInData.user) {
+          toast.success('Account created! Please sign in.');
+          setLoading(false);
+          return;
+        }
+
+        const userId = signInData.user.id;
+
+        // Upload avatar if provided
+        if (avatarFile) await uploadAvatar(userId);
+        // Update DOB if provided
+        if (dob) await supabase.from('profiles').update({ date_of_birth: dob }).eq('user_id', userId);
+
         if (signUpRole === 'admin') {
-          toast.info('Verifying admin key...');
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email: email.trim(),
-            password,
+          const { data, error } = await supabase.functions.invoke('verify-admin-key', {
+            body: { admin_key: adminKey.trim(), user_id: userId },
           });
-
-          if (signInError) {
-            toast.success('Account created! Please confirm your email first, then sign in to verify admin access.');
-            setLoading(false);
-            return;
-          }
-
-          if (signInData.user) {
-            // Upload avatar if provided
-            if (avatarFile) {
-              await uploadAvatar(signInData.user.id);
-            }
-            // Update DOB if provided
-            if (dob) {
-              await supabase.from('profiles').update({ date_of_birth: dob }).eq('user_id', signInData.user.id);
-            }
-
-            const { data, error } = await supabase.functions.invoke('verify-admin-key', {
-              body: { admin_key: adminKey.trim(), user_id: signInData.user.id },
-            });
-
-            if (error || data?.error) {
-              toast.error(data?.error || 'Invalid admin key. You have been registered as a regular user.');
-              await supabase.auth.signOut();
-            } else {
-              toast.success('Admin account created successfully!');
-              navigate({ to: '/home' });
-              setLoading(false);
-              return;
-            }
+          if (error || data?.error) {
+            toast.error(data?.error || 'Invalid admin key. Registered as regular user.');
+          } else {
+            toast.success('Admin account created! 🛡️');
           }
         } else {
-          // For regular users, try to sign in to upload avatar/DOB
-          const { data: signInData } = await supabase.auth.signInWithPassword({
-            email: email.trim(),
-            password,
-          });
-
-          if (signInData?.user) {
-            if (avatarFile) await uploadAvatar(signInData.user.id);
-            if (dob) await supabase.from('profiles').update({ date_of_birth: dob }).eq('user_id', signInData.user.id);
-            toast.success('Account created! Welcome!');
-            navigate({ to: '/home' });
-          } else {
-            toast.success('Account created! Check your email to confirm.');
-          }
+          toast.success('Welcome to NSP App! 🎉');
         }
+        navigate({ to: '/home' });
       } else {
         await signIn(email.trim(), password);
         toast.success('Welcome back!');
@@ -141,10 +120,10 @@ function AuthPage() {
       <div className="w-full max-w-sm fade-in">
         <div className="flex flex-col items-center mb-10">
           <div className="neu-convex p-5 mb-4">
-            <Church size={32} className="text-primary" />
+            <Sparkles size={32} className="text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Church Hub</h1>
-          <p className="text-muted-foreground text-[14px] mt-1">Your spiritual content platform</p>
+          <h1 className="text-2xl font-bold text-foreground">NSP App</h1>
+          <p className="text-muted-foreground text-[14px] mt-1">Your community platform</p>
         </div>
 
         {isSignUp && (
@@ -156,8 +135,7 @@ function AuthPage() {
                 signUpRole === 'user' ? 'neu-pressed text-primary' : 'neu-btn text-muted-foreground'
               }`}
             >
-              <User size={16} />
-              User
+              <User size={16} /> User
             </button>
             <button
               type="button"
@@ -166,8 +144,7 @@ function AuthPage() {
                 signUpRole === 'admin' ? 'neu-pressed text-church-gold' : 'neu-btn text-muted-foreground'
               }`}
             >
-              <Shield size={16} />
-              Admin
+              <Shield size={16} /> Admin
             </button>
           </div>
         )}
@@ -175,7 +152,6 @@ function AuthPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
             <>
-              {/* Avatar upload */}
               <div className="flex justify-center mb-2">
                 <div className="relative">
                   <button
@@ -194,14 +170,7 @@ function AuthPage() {
                 </div>
               </div>
 
-              <NeuInput
-                label="Full Name"
-                placeholder="John Doe"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                autoComplete="name"
-              />
-
+              <NeuInput label="Full Name" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} autoComplete="name" />
               <div className="space-y-1.5">
                 <label className="text-[13px] font-medium text-foreground pl-1">Date of Birth</label>
                 <input
@@ -214,31 +183,11 @@ function AuthPage() {
             </>
           )}
 
-          <NeuInput
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            autoComplete="email"
-          />
-          <NeuInput
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            autoComplete={isSignUp ? 'new-password' : 'current-password'}
-          />
+          <NeuInput label="Email" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
+          <NeuInput label="Password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} autoComplete={isSignUp ? 'new-password' : 'current-password'} />
 
           {isSignUp && signUpRole === 'admin' && (
-            <NeuInput
-              label="Admin Secret Key"
-              type="password"
-              placeholder="Enter admin key..."
-              value={adminKey}
-              onChange={e => setAdminKey(e.target.value)}
-            />
+            <NeuInput label="Admin Secret Key" type="password" placeholder="Enter admin key..." value={adminKey} onChange={e => setAdminKey(e.target.value)} />
           )}
 
           <div className="pt-2">

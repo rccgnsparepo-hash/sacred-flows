@@ -4,13 +4,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { BottomNav } from '@/components/BottomNav';
 import { SkeletonCard } from '@/components/SkeletonCard';
-import { Image, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Image, X, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { toast } from 'sonner';
 
 export const Route = createFileRoute('/gallery')({
   head: () => ({
     meta: [
-      { title: 'Gallery — Church Hub' },
-      { name: 'description', content: 'Church photo gallery' },
+      { title: 'Gallery — NSP App' },
+      { name: 'description', content: 'Community photo gallery' },
     ],
   }),
   component: GalleryPage,
@@ -45,7 +46,6 @@ function GalleryPage() {
 
   useEffect(() => { fetchGallery(); }, [fetchGallery]);
 
-  // Realtime
   useEffect(() => {
     const channel = supabase
       .channel('gallery-realtime')
@@ -63,6 +63,24 @@ function GalleryPage() {
     if (selectedIndex !== null && selectedIndex > 0) setSelectedIndex(selectedIndex - 1);
   };
 
+  const handleDownload = async (imageUrl: string, caption: string | null) => {
+    try {
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = caption ? `${caption.replace(/[^a-z0-9]/gi, '_')}.jpg` : 'image.jpg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Image downloaded!');
+    } catch {
+      toast.error('Download failed');
+    }
+  };
+
   if (authLoading) return null;
 
   return (
@@ -74,7 +92,7 @@ function GalleryPage() {
           </div>
           <div>
             <h1 className="text-[22px] font-bold text-foreground">Gallery</h1>
-            <p className="text-[13px] text-muted-foreground">Church photos & moments</p>
+            <p className="text-[13px] text-muted-foreground">Community photos & moments</p>
           </div>
         </div>
       </div>
@@ -112,18 +130,25 @@ function GalleryPage() {
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {items.map((item, idx) => (
-              <button
-                key={item.id}
-                onClick={() => setSelectedIndex(idx)}
-                className="aspect-square rounded-2xl overflow-hidden neu-card-sm relative group"
-              >
-                <img src={item.image_url} alt={item.caption || ''} className="w-full h-full object-cover" loading="lazy" />
-                {item.caption && (
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/60 to-transparent p-3">
-                    <p className="text-[12px] text-primary-foreground line-clamp-1">{item.caption}</p>
-                  </div>
-                )}
-              </button>
+              <div key={item.id} className="relative group">
+                <button
+                  onClick={() => setSelectedIndex(idx)}
+                  className="aspect-square w-full rounded-2xl overflow-hidden neu-card-sm"
+                >
+                  <img src={item.image_url} alt={item.caption || ''} className="w-full h-full object-cover" loading="lazy" />
+                  {item.caption && (
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/60 to-transparent p-3">
+                      <p className="text-[12px] text-primary-foreground line-clamp-1">{item.caption}</p>
+                    </div>
+                  )}
+                </button>
+                <button
+                  onClick={() => handleDownload(item.image_url, item.caption)}
+                  className="absolute top-2 right-2 p-1.5 bg-background/70 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Download size={14} className="text-foreground" />
+                </button>
+              </div>
             ))}
           </div>
         )}
@@ -132,9 +157,17 @@ function GalleryPage() {
       {/* Fullscreen viewer */}
       {selectedIndex !== null && items[selectedIndex] && (
         <div className="fixed inset-0 z-50 bg-foreground/90 flex flex-col items-center justify-center fade-in" onClick={() => setSelectedIndex(null)}>
-          <button className="absolute top-12 right-5 p-2 text-primary-foreground z-10">
-            <X size={24} />
-          </button>
+          <div className="absolute top-12 right-5 flex gap-3 z-10">
+            <button
+              onClick={(e) => { e.stopPropagation(); handleDownload(items[selectedIndex].image_url, items[selectedIndex].caption); }}
+              className="p-3 bg-background/20 rounded-full backdrop-blur-sm"
+            >
+              <Download size={20} className="text-primary-foreground" />
+            </button>
+            <button className="p-3 text-primary-foreground">
+              <X size={24} />
+            </button>
+          </div>
 
           <div className="relative w-full max-w-lg px-4" onClick={e => e.stopPropagation()}>
             <img
