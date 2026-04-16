@@ -124,12 +124,11 @@ function ProfilePage() {
   const handleSaveProfile = async () => {
     if (!user) return;
     setSaving(true);
-    const updates: Record<string, unknown> = {};
-    if (editName.trim()) updates.name = editName.trim();
-    if (editDob) updates.date_of_birth = editDob;
-    updates.bio = editBio.trim() || null;
-
-    const { error } = await supabase.from('profiles').update(updates).eq('user_id', user.id);
+    const { error } = await supabase.from('profiles').update({
+      name: editName.trim() || undefined,
+      date_of_birth: editDob || undefined,
+      bio: editBio.trim() || null,
+    }).eq('user_id', user.id);
     if (error) {
       toast.error('Failed to update profile');
     } else {
