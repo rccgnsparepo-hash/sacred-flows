@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Play } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Link } from '@tanstack/react-router';
+import { Heart, MessageCircle, Share2, MoreHorizontal, Trash2, Play, Bookmark, Flag, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -9,6 +10,7 @@ export interface PostData {
   user_id: string;
   content_text: string | null;
   media_url: string | null;
+  media_urls?: string[] | null;
   media_type: string | null;
   like_count: number;
   comment_count: number;
@@ -16,6 +18,8 @@ export interface PostData {
   created_at: string;
   user_name?: string;
   user_avatar?: string;
+  user_username?: string | null;
+  is_admin_post?: boolean;
 }
 
 interface PostCardProps {
@@ -27,8 +31,17 @@ interface PostCardProps {
 }
 
 function getYoutubeId(url: string): string | null {
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/);
-  return match ? match[1] : null;
+  if (!url) return null;
+  // Handle: youtu.be/ID, youtube.com/watch?v=ID, /embed/ID, /shorts/ID, /live/ID, /v/ID, with extra params
+  const patterns = [
+    /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/,
+    /^([A-Za-z0-9_-]{11})$/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
 }
 
 function timeAgo(date: string): string {

@@ -137,9 +137,10 @@ export function CommentsSheet({ postId, onClose }: CommentsSheetProps) {
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-foreground/30 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-end bg-foreground/40 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full max-h-[75vh] bg-background rounded-t-3xl flex flex-col slide-up"
+        className="w-full max-h-[85vh] bg-background rounded-t-3xl flex flex-col slide-up shadow-2xl"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
