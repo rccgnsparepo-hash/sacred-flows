@@ -6,6 +6,7 @@ import { PostCard, type PostData } from '@/components/PostCard';
 import { CommentsSheet } from '@/components/CommentsSheet';
 import { SkeletonCard } from '@/components/SkeletonCard';
 import { BottomNav } from '@/components/BottomNav';
+import { StoriesBar } from '@/components/StoriesBar';
 import { Cake, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -55,11 +56,10 @@ function HomePage() {
       .range(offset, offset + PAGE_SIZE - 1);
 
     if (postsData) {
-      // Enrich with user profiles
       const userIds = [...new Set(postsData.map(p => p.user_id))];
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, name, avatar_url')
+        .select('user_id, name, avatar_url, username')
         .in('user_id', userIds);
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
 
@@ -67,6 +67,7 @@ function HomePage() {
         ...p,
         user_name: profileMap.get(p.user_id)?.name || 'User',
         user_avatar: profileMap.get(p.user_id)?.avatar_url || undefined,
+        user_username: profileMap.get(p.user_id)?.username || null,
       }));
 
       if (append) {
@@ -192,6 +193,8 @@ function HomePage() {
           </button>
         </div>
       </div>
+
+      <StoriesBar />
 
       {/* Birthdays */}
       {birthdays.length > 0 && (
