@@ -10,8 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VideosRouteImport } from './routes/videos'
+import { Route as SavedRouteImport } from './routes/saved'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrayersRouteImport } from './routes/prayers'
+import { Route as MoreRouteImport } from './routes/more'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as GalleryRouteImport } from './routes/gallery'
@@ -19,7 +21,11 @@ import { Route as CreateRouteImport } from './routes/create'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChatIndexRouteImport } from './routes/chat.index'
+import { Route as UHandleRouteImport } from './routes/u.$handle'
+import { Route as FeedAdminRouteImport } from './routes/feed.admin'
 import { Route as ContentIdRouteImport } from './routes/content.$id'
+import { Route as ChatIdRouteImport } from './routes/chat.$id'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminUploadRouteImport } from './routes/admin.upload'
 import { Route as AdminGalleryRouteImport } from './routes/admin.gallery'
@@ -30,6 +36,11 @@ const VideosRoute = VideosRouteImport.update({
   path: '/videos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SavedRoute = SavedRouteImport.update({
+  id: '/saved',
+  path: '/saved',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -38,6 +49,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const PrayersRoute = PrayersRouteImport.update({
   id: '/prayers',
   path: '/prayers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MoreRoute = MoreRouteImport.update({
+  id: '/more',
+  path: '/more',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LibraryRoute = LibraryRouteImport.update({
@@ -75,9 +91,29 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChatIndexRoute = ChatIndexRouteImport.update({
+  id: '/chat/',
+  path: '/chat/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UHandleRoute = UHandleRouteImport.update({
+  id: '/u/$handle',
+  path: '/u/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedAdminRoute = FeedAdminRouteImport.update({
+  id: '/feed/admin',
+  path: '/feed/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContentIdRoute = ContentIdRouteImport.update({
   id: '/content/$id',
   path: '/content/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatIdRoute = ChatIdRouteImport.update({
+  id: '/chat/$id',
+  path: '/chat/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
@@ -109,14 +145,20 @@ export interface FileRoutesByFullPath {
   '/gallery': typeof GalleryRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
+  '/more': typeof MoreRoute
   '/prayers': typeof PrayersRoute
   '/profile': typeof ProfileRoute
+  '/saved': typeof SavedRoute
   '/videos': typeof VideosRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/upload': typeof AdminUploadRoute
   '/admin/users': typeof AdminUsersRoute
+  '/chat/$id': typeof ChatIdRoute
   '/content/$id': typeof ContentIdRoute
+  '/feed/admin': typeof FeedAdminRoute
+  '/u/$handle': typeof UHandleRoute
+  '/chat/': typeof ChatIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,14 +168,20 @@ export interface FileRoutesByTo {
   '/gallery': typeof GalleryRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
+  '/more': typeof MoreRoute
   '/prayers': typeof PrayersRoute
   '/profile': typeof ProfileRoute
+  '/saved': typeof SavedRoute
   '/videos': typeof VideosRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/upload': typeof AdminUploadRoute
   '/admin/users': typeof AdminUsersRoute
+  '/chat/$id': typeof ChatIdRoute
   '/content/$id': typeof ContentIdRoute
+  '/feed/admin': typeof FeedAdminRoute
+  '/u/$handle': typeof UHandleRoute
+  '/chat': typeof ChatIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -144,14 +192,20 @@ export interface FileRoutesById {
   '/gallery': typeof GalleryRoute
   '/home': typeof HomeRoute
   '/library': typeof LibraryRoute
+  '/more': typeof MoreRoute
   '/prayers': typeof PrayersRoute
   '/profile': typeof ProfileRoute
+  '/saved': typeof SavedRoute
   '/videos': typeof VideosRoute
   '/admin/content': typeof AdminContentRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/upload': typeof AdminUploadRoute
   '/admin/users': typeof AdminUsersRoute
+  '/chat/$id': typeof ChatIdRoute
   '/content/$id': typeof ContentIdRoute
+  '/feed/admin': typeof FeedAdminRoute
+  '/u/$handle': typeof UHandleRoute
+  '/chat/': typeof ChatIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -163,14 +217,20 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/home'
     | '/library'
+    | '/more'
     | '/prayers'
     | '/profile'
+    | '/saved'
     | '/videos'
     | '/admin/content'
     | '/admin/gallery'
     | '/admin/upload'
     | '/admin/users'
+    | '/chat/$id'
     | '/content/$id'
+    | '/feed/admin'
+    | '/u/$handle'
+    | '/chat/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -180,14 +240,20 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/home'
     | '/library'
+    | '/more'
     | '/prayers'
     | '/profile'
+    | '/saved'
     | '/videos'
     | '/admin/content'
     | '/admin/gallery'
     | '/admin/upload'
     | '/admin/users'
+    | '/chat/$id'
     | '/content/$id'
+    | '/feed/admin'
+    | '/u/$handle'
+    | '/chat'
   id:
     | '__root__'
     | '/'
@@ -197,14 +263,20 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/home'
     | '/library'
+    | '/more'
     | '/prayers'
     | '/profile'
+    | '/saved'
     | '/videos'
     | '/admin/content'
     | '/admin/gallery'
     | '/admin/upload'
     | '/admin/users'
+    | '/chat/$id'
     | '/content/$id'
+    | '/feed/admin'
+    | '/u/$handle'
+    | '/chat/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -215,10 +287,16 @@ export interface RootRouteChildren {
   GalleryRoute: typeof GalleryRoute
   HomeRoute: typeof HomeRoute
   LibraryRoute: typeof LibraryRoute
+  MoreRoute: typeof MoreRoute
   PrayersRoute: typeof PrayersRoute
   ProfileRoute: typeof ProfileRoute
+  SavedRoute: typeof SavedRoute
   VideosRoute: typeof VideosRoute
+  ChatIdRoute: typeof ChatIdRoute
   ContentIdRoute: typeof ContentIdRoute
+  FeedAdminRoute: typeof FeedAdminRoute
+  UHandleRoute: typeof UHandleRoute
+  ChatIndexRoute: typeof ChatIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -228,6 +306,13 @@ declare module '@tanstack/react-router' {
       path: '/videos'
       fullPath: '/videos'
       preLoaderRoute: typeof VideosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/saved': {
+      id: '/saved'
+      path: '/saved'
+      fullPath: '/saved'
+      preLoaderRoute: typeof SavedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -242,6 +327,13 @@ declare module '@tanstack/react-router' {
       path: '/prayers'
       fullPath: '/prayers'
       preLoaderRoute: typeof PrayersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/more': {
+      id: '/more'
+      path: '/more'
+      fullPath: '/more'
+      preLoaderRoute: typeof MoreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/library': {
@@ -293,11 +385,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/chat/': {
+      id: '/chat/'
+      path: '/chat'
+      fullPath: '/chat/'
+      preLoaderRoute: typeof ChatIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/u/$handle': {
+      id: '/u/$handle'
+      path: '/u/$handle'
+      fullPath: '/u/$handle'
+      preLoaderRoute: typeof UHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feed/admin': {
+      id: '/feed/admin'
+      path: '/feed/admin'
+      fullPath: '/feed/admin'
+      preLoaderRoute: typeof FeedAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/content/$id': {
       id: '/content/$id'
       path: '/content/$id'
       fullPath: '/content/$id'
       preLoaderRoute: typeof ContentIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/$id': {
+      id: '/chat/$id'
+      path: '/chat/$id'
+      fullPath: '/chat/$id'
+      preLoaderRoute: typeof ChatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/users': {
@@ -355,10 +475,16 @@ const rootRouteChildren: RootRouteChildren = {
   GalleryRoute: GalleryRoute,
   HomeRoute: HomeRoute,
   LibraryRoute: LibraryRoute,
+  MoreRoute: MoreRoute,
   PrayersRoute: PrayersRoute,
   ProfileRoute: ProfileRoute,
+  SavedRoute: SavedRoute,
   VideosRoute: VideosRoute,
+  ChatIdRoute: ChatIdRoute,
   ContentIdRoute: ContentIdRoute,
+  FeedAdminRoute: FeedAdminRoute,
+  UHandleRoute: UHandleRoute,
+  ChatIndexRoute: ChatIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
