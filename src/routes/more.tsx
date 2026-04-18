@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { BottomNav } from '@/components/BottomNav';
-import { Newspaper, HandHeart, Shield, Bookmark, MessageCircle, Image as ImageIcon, FileText, ArrowRight } from 'lucide-react';
+import { HandHeart, Shield, Bookmark, MessageCircle, Image as ImageIcon, FileText, ArrowRight, CalendarCheck } from 'lucide-react';
 
 export const Route = createFileRoute('/more')({
   head: () => ({ meta: [{ title: 'More — NSP Socials' }] }),
@@ -16,6 +16,7 @@ function MorePage() {
 
   const items = [
     { to: '/feed/admin' as const, icon: Shield, label: 'Admin Posts', desc: 'Posts from admins', color: 'text-church-gold' },
+    { to: '/attendance' as const, icon: CalendarCheck, label: 'Attendance', desc: 'Check in to services', color: 'text-primary' },
     { to: '/prayers' as const, icon: HandHeart, label: 'Community Prayer', desc: 'Share & support', color: 'text-primary' },
     { to: '/gallery' as const, icon: ImageIcon, label: 'Gallery', desc: 'Browse photos', color: 'text-primary' },
     { to: '/library' as const, icon: FileText, label: 'Resources', desc: 'PDFs & links', color: 'text-foreground' },
