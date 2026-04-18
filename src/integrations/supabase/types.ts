@@ -290,6 +290,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          comment_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string | null
+          post_id: string | null
+          recipient_id: string
+          type: string
+        }
+        Insert: {
+          actor_id?: string | null
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          post_id?: string | null
+          recipient_id: string
+          type: string
+        }
+        Update: {
+          actor_id?: string | null
+          comment_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          post_id?: string | null
+          recipient_id?: string
+          type?: string
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           comment_count: number
@@ -368,6 +404,8 @@ export type Database = {
           id: string
           login_streak: number
           name: string
+          notifications_enabled: boolean
+          phone: string | null
           points: number
           theme_preference: string
           updated_at: string
@@ -385,6 +423,8 @@ export type Database = {
           id?: string
           login_streak?: number
           name?: string
+          notifications_enabled?: boolean
+          phone?: string | null
           points?: number
           theme_preference?: string
           updated_at?: string
@@ -402,6 +442,8 @@ export type Database = {
           id?: string
           login_streak?: number
           name?: string
+          notifications_enabled?: boolean
+          phone?: string | null
           points?: number
           theme_preference?: string
           updated_at?: string
@@ -524,6 +566,7 @@ export type Database = {
         Returns: boolean
       }
       increment_pray_count: { Args: { request_id: string }; Returns: undefined }
+      promote_to_admin: { Args: { _admin_key: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
