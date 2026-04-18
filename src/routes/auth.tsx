@@ -86,13 +86,11 @@ function AuthPage() {
         const userId = signInData.user.id;
 
         // Update profile with extras
-        const updates: Record<string, unknown> = {};
-        if (dob) updates.date_of_birth = dob;
-        if (phone.trim()) updates.phone = phone.trim();
-        if (name.trim()) updates.name = name.trim();
-        if (Object.keys(updates).length) {
-          await supabase.from('profiles').update(updates).eq('user_id', userId);
-        }
+        await supabase.from('profiles').update({
+          name: name.trim() || undefined,
+          phone: phone.trim() || null,
+          date_of_birth: dob || null,
+        }).eq('user_id', userId);
 
         if (avatarFile) await uploadAvatar(userId);
 
