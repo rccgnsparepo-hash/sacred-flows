@@ -2,7 +2,9 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
-export type Theme = 'light' | 'dark' | 'cyberpunk' | 'minimal';
+export type Theme = 'light' | 'dark' | 'glass' | 'blur';
+
+const VALID: Theme[] = ['light', 'dark', 'glass', 'blur'];
 
 interface ThemeContextType {
   theme: Theme;
@@ -17,22 +19,19 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem('nsp-theme') as Theme | null;
-    if (saved) {
-      setThemeState(saved);
-      applyTheme(saved);
-    }
+    const t = saved && VALID.includes(saved) ? saved : 'light';
+    setThemeState(t);
+    applyTheme(t);
   }, []);
 
-  // Load from DB when user logs in
   useEffect(() => {
     if (!user) return;
     supabase.from('profiles').select('theme_preference').eq('user_id', user.id).single().then(({ data }) => {
-      if (data?.theme_preference) {
-        const t = data.theme_preference as Theme;
-        setThemeState(t);
-        applyTheme(t);
-        localStorage.setItem('nsp-theme', t);
-      }
+      const raw = data?.theme_preference as Theme | undefined;
+      const t = raw && VALID.includes(raw) ? raw : 'light';
+      setThemeState(t);
+      applyTheme(t);
+      localStorage.setItem('nsp-theme', t);
     });
   }, [user]);
 
@@ -54,7 +53,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
-  root.classList.remove('dark', 'cyberpunk', 'minimal');
+  root.classList.remove('dark', 'glass', 'blur', 'cyberpunk', 'minimal');
   if (theme !== 'light') root.classList.add(theme);
 }
 
