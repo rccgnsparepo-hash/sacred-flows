@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_records: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          session_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          session_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          session_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "attendance_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_sessions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_open: boolean
+          session_date: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_open?: boolean
+          session_date: string
+          title?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_open?: boolean
+          session_date?: string
+          title?: string
+        }
+        Relationships: []
+      }
       bookmarks: {
         Row: {
           content_id: string
