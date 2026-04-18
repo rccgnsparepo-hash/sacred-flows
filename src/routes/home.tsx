@@ -9,7 +9,18 @@ import { BottomNav } from '@/components/BottomNav';
 import { StoriesBar } from '@/components/StoriesBar';
 import { Cake, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-
+useEffect(() => {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+      .register("public/sw.js")
+      .then((registration) => {
+        console.log("SW registered:", registration);
+      })
+      .catch((error) => {
+        console.log("SW registration failed:", error);
+      });
+  }
+}, []);
 export const Route = createFileRoute('/home')({
   head: () => ({
     meta: [
