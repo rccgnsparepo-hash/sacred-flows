@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { NeuInput } from '@/components/NeuInput';
 import { NeuButton } from '@/components/NeuButton';
-import { Sparkles, Shield, User, Camera } from 'lucide-react';
+import { Sparkles, Shield, User, Camera, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -23,12 +23,13 @@ function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [dob, setDob] = useState('');
   const [adminKey, setAdminKey] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, user } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -49,7 +50,8 @@ function AuthPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) return;
-    if (isSignUp && !name.trim()) return;
+    if (isSignUp && !name.trim()) { toast.error('Full name is required'); return; }
+    if (isSignUp && !phone.trim()) { toast.error('Phone number is required'); return; }
     if (isSignUp && signUpRole === 'admin' && !adminKey.trim()) {
       toast.error('Admin key is required');
       return;
@@ -58,9 +60,18 @@ function AuthPage() {
     setLoading(true);
     try {
       if (isSignUp) {
-        await signUp(email.trim(), password, name.trim());
+        // Sign up with metadata so handle_new_user trigger captures name + phone
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            data: { name: name.trim(), phone: phone.trim() },
+            emailRedirectTo: window.location.origin,
+          },
+        });
+        if (signUpError) throw signUpError;
 
-        // Auto-confirm is enabled, so sign in immediately
+        // Auto-sign-in (auto-confirm assumed)
         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
@@ -74,17 +85,20 @@ function AuthPage() {
 
         const userId = signInData.user.id;
 
-        // Upload avatar if provided
+        // Update profile with extras
+        await supabase.from('profiles').update({
+          name: name.trim() || undefined,
+          phone: phone.trim() || null,
+          date_of_birth: dob || null,
+        }).eq('user_id', userId);
+
         if (avatarFile) await uploadAvatar(userId);
-        // Update DOB if provided
-        if (dob) await supabase.from('profiles').update({ date_of_birth: dob }).eq('user_id', userId);
 
         if (signUpRole === 'admin') {
-          const { data, error } = await supabase.functions.invoke('verify-admin-key', {
-            body: { admin_key: adminKey.trim(), user_id: userId },
-          });
-          if (error || data?.error) {
-            toast.error(data?.error || 'Invalid admin key. Registered as regular user.');
+          // Use the new RPC for admin promotion (works without edge function)
+          const { data: ok, error } = await supabase.rpc('promote_to_admin', { _admin_key: adminKey.trim() });
+          if (error || !ok) {
+            toast.error('Invalid admin key. Registered as regular user.');
           } else {
             toast.success('Admin account created! 🛡️');
           }
@@ -171,6 +185,7 @@ function AuthPage() {
               </div>
 
               <NeuInput label="Full Name" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} autoComplete="name" />
+              <NeuInput label="Phone Number" type="tel" placeholder="+1 555 123 4567" value={phone} onChange={e => setPhone(e.target.value)} autoComplete="tel" />
               <div className="space-y-1.5">
                 <label className="text-[13px] font-medium text-foreground pl-1">Date of Birth</label>
                 <input
@@ -199,7 +214,7 @@ function AuthPage() {
 
         <div className="mt-6 text-center">
           <button
-            onClick={() => { setIsSignUp(!isSignUp); setSignUpRole('user'); setAdminKey(''); setAvatarFile(null); setAvatarPreview(null); setDob(''); }}
+            onClick={() => { setIsSignUp(!isSignUp); setSignUpRole('user'); setAdminKey(''); setAvatarFile(null); setAvatarPreview(null); setDob(''); setPhone(''); }}
             className="text-[14px] text-muted-foreground"
           >
             {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
