@@ -473,6 +473,7 @@ export type Database = {
           login_streak: number
           name: string
           notifications_enabled: boolean
+          onesignal_player_id: string | null
           phone: string | null
           points: number
           theme_preference: string
@@ -492,6 +493,7 @@ export type Database = {
           login_streak?: number
           name?: string
           notifications_enabled?: boolean
+          onesignal_player_id?: string | null
           phone?: string | null
           points?: number
           theme_preference?: string
@@ -511,6 +513,7 @@ export type Database = {
           login_streak?: number
           name?: string
           notifications_enabled?: boolean
+          onesignal_player_id?: string | null
           phone?: string | null
           points?: number
           theme_preference?: string
